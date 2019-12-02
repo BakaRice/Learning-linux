@@ -421,7 +421,7 @@ exec基本参数：-i；-t。结合/bin/bash使用
 `cat /etc/issue`
 `docker inspect  [id/name] ` 容器id/镜像id查看容器镜像的详细信息。
 `docker images [id/name]`：查看镜像信息
-`ps -ef | grep 8dac6ac683f5`:查看镜像/容器占用
+`ps -ef | grep 8dac6ac683f5`:查看镜像/容器占用  
 
 ### 2019.11.26 - 13.FirewallD & Services
 CentOS集成的firewall工具。ports？firewall zone？使用默认的zone-public无需声明
