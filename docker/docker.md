@@ -204,14 +204,48 @@ bin/; dev/; mnt/; etc/; opt/; usr/; lib/; home/; /usr/bin/; /usr/lib/; /usr/libe
 >值得提出的是，/bin, /usr/bin 是给系统用户使用的指令（除root外的通用户），而/sbin, /usr/sbin 则是给root使用的指令。
 >/var： 这是一个非常重要的目录，系统上跑了很多程序，那么每个程序都会有相应的日志产生，而这些日志就被记录到这个目录下，具体在/var/log 目录下，另外mail的预设放置也是在这里。
 
-### 2019.11.26 - 8.bash & chmod
-Shell？bash？cat？了解脚本的：基本结构，支持的语句，执行linux命令，运行即可
+### 2019.11.30 - 8.Mount
+插入一个fat32/ntfs格式U盘，exfat默认不支持
+设置虚拟机识别读取。基本命令：列出所有指定格式磁盘；挂载设备，浏览设备内文件；取消挂载
+
+
+### 2019.11.26 - 9.bash & chmod
+**Shell？bash？cat？了解脚本的：基本结构，支持的语句，执行linux命令，运行即可**
+####1.What is shell？
 >Shell 是一个用 C 语言编写的程序，它是用户使用 Linux 的桥梁。Shell 既是一种命令语言，又是一种程序设计语言。
 >Shell 是指一种应用程序，这个应用程序提供了一个界面，用户通过这个界面访问操作系统内核的服务。
+>>bash是Unix shell的一种，Bash是许多Linux发行版的默认Shell
+>>cat 命令用于连接文件并打印到标准输出设备上。（cat是使用方法不仅局限于查看内容，他也可以做到修改内容但是个人平常并不推荐这么用
 
-在/home/用户名/test下，基于vi编写一个由bash执行的，打印出/home/用户名/test/下所有文件的脚本
+####2.基本结构
+```
+#!/bin/bash
+echo "Hello World !"
+```
+<kbd>\#!</kbd> 是一个约定的标记，它告诉系统这个脚本需要什么解释器来执行，即使用哪一种 Shell。
+echo 命令用于向窗口输出文本。
+####3.支持语句
+<kbd>echo</kbd>
+<kbd>printf</kbd>
+<kbd>test</kbd>
+<kbd>for循环语句<kbd>：
+```
+for 变量名 in 列表;do
+               循环体
+       done
+```
+**shell参数传递：**
+<kbd>\$#</kbd> :传递到脚本的参数个数
+<kbd>\$\*</kbd> :以一个单字符串显示所有向脚本传递的参数。如<kbd>"\$\*"</kbd>用\「\"\」括起来的情况、以"\$1 \$2 … \$n"的形式输出所有参数。  
+<kbd>\$\$</kbd>	:脚本运行的当前进程ID号
+<kbd>\$\!</kbd>	:后台运行的最后一个进程的ID号
+<kbd>\$\@</kbd>	:与<kbd>\$\*</kbd>相同，但是使用时加引号，并在引号中返回每个参数。如<kbd>\"\$\@\"</kbd>用「"」括起来的情况、以"$1" "$2" … "$n" 的形式输出所有参数。
+<kbd>\$\-</kbd>	:显示Shell使用的当前选项，与set命令功能相同。
+<kbd>\$\?</kbd>	:显示最后命令的退出状态。0表示没有错误，其他任何值表明有错误。
+
+**在/home/用户名/test下，基于vi编写一个由bash执行的，打印出/home/用户名/test/下所有文件的脚本
 需要添加脚本文件的执行权限，运行
-基于cat读取显式脚本代码
+基于cat读取显式脚本代码**
 ```
 #!/bin/bash
 for file in `ls`;do
@@ -221,18 +255,39 @@ done
 使用 <kbd>Ctrl</kbd>+<kbd>Z</kbd>+<kbd>Z</kbd>可以直接保存退出
 
 
-带权限的列出文件
-chmod命令，r/w/x？3组权限？u/g/o？增加/修改/删除指定角色的指定权限。使用语义参数比数字好记
+**带权限的列出文件**
+`ls -al ` ` ls -l`
+**chmod命令，r/w/x？3组权限？u/g/o？增加/修改/删除指定角色的指定权限。使用语义参数比数字好记
 为以上脚本文件，添加创建者具有读写执行权限命令？取消其他用户的读权限？
-权限角色，u，所有者；g，组；o，其他人
+权限角色，u，所有者；g，组；o，其他人**
 
-### 2019.11.26 - 9.Docker
+### 2019.11.26 - 10.Docker
 可以把安装的gcc/openjdk等等都卸载了
 https://docs.docker.com/engine/docker-overview/
 https://geekflare.com/docker-vs-virtual-machine/
 https://yeasy.gitbooks.io/docker_practice/
-了解早先服务器基于虚拟化技术的部署，为什么使用虚拟化技术？当前Docker的虚拟化与之前的区别？优点？了解docker images docker containers？
-Servers？VPS？Cloud Servers？为什么VPS创建了就开始计时付费？而云可以按流量/CPU内存等的实际使用量弹性付费？
+#### 1.虚拟化技术&docker虚拟化优势
+**了解早先服务器基于虚拟化技术的部署，为什么使用虚拟化技术？当前Docker的虚拟化与之前的区别？优点？了解docker images docker containers？**
+Docker engine提供了启动Images和containers核心的技术的支持。当你运行docker run hello-world 命令时，实际上可分为三个部分：
+![运行docker run hello-world的时间过程](https://images2015.cnblogs.com/blog/918915/201701/918915-20170126134304191-517283657.png)
+
+1. 告诉你操作系统你正在使用的docker程序
+2. 一个子命令创建并且运行docker容器
+3. 告诉docker将载入到容器中的Image映像  
+
+一个映像是一个文件系统，是在运行时使用的参数，它没有状态和不会改变。容器用来运行映像的实例。当你运行下面命令的时候将会发生下面这些情况：
+
+1. 检查你是否有hello-world软件映像
+2. 从Docker Hub中下载映像
+3. 将映像载入容器中并运行它。
+
+依赖于这个映像如何创建，一个映像可能运行一个简单、单一的命令然后退出，hello-world映像就是这样的，不过docker还能启动向数据库那样的软件。Docker引擎能够是人们或者公司创建和分享自己的Docker 映像。使用Docker引擎，你不需要担心你的计算机能否运行Docker映像中的软件，Docker容器总是可以运行它。
+#### 2.What is vps and Cloud Servers?
+**Servers？VPS？Cloud Servers？为什么VPS创建了就开始计时付费？而云可以按流量/CPU内存等的实际使用量弹性付费？**
+- vps： 是采用操作系统虚拟化技术，将一台服务器分割为多个虚拟专享服务器
+   用户和服务器存在一种绑定的关系
+- 云服务器：在服务器集群中采用硬件虚拟化技术。
+   随时虚拟化的过程
 
 |Virtual Machine|Docker Container|
 |--|--|
@@ -250,41 +305,125 @@ https://docs.docker.com/
 官网查找适合centos系统的docker-ce社区稳定版的安装方法。Community版？
 安装基本工具；添加docker官方仓库，下载docker-ce本身的仓库使用官方地址即可，速度很快。无需指定版本，安装最新版docker-ce
 启动docker。开机自动启动docker服务
+```
+[root@localhost home]# systemctl start docker
+[root@localhost home]# docker run hello-world
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+1b930d010525: Pull complete
+Digest: sha256:4df8ca8a7e309c256d60d7971ea14c27672fc0d10c5f303856d7bc48f8cc17ff
+Status: Downloaded newer image for hello-world:latest
 
-### 2019.11.26 - 10.Docker Images
-docker官方镜像仓库国内速度慢，基于vi修改配置文件，
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+[root@localhost home]#
+
+```
+### 2019.11.26 - 11.Docker Images
+- **docker官方镜像仓库国内速度慢，基于vi修改配置文件，**  
+
+`[root@localhost docker]# vi  /etc/docker/daemon.json`
+```
+{
+ "registry-mirrors": ["https://dockerhub.azk8s.cn"]
+}
+```
 使用微软Azure仓库https://dockerhub.azk8s.cn，我这拉取500MB镜像1分钟。基本满速。服务器在国外的不要配。其他仓库要么需要密钥，要么已作废
-重新加载配置，重启docker
 
-Docker基本命令：拉取镜像；列出本地镜像；删除镜像；不建议在本地查询，去官方网站查询更方便
-不用拉取hello-world测试，直接拉取最新的openjdk
+- **重新加载配置，重启docker**
+`# systemctl status docker.restart`
+<br>
+- **Docker基本命令：拉取镜像；列出本地镜像；删除镜像；**
+不建议在本地查询，去官方网站查询更方便
+`# docker pull [选项] [Docker Registry 地址[:端口号]/]仓库名[:标签]` 拉取镜像
+`# docker image ls`:列出本地镜像
+`# docker image rm [选项] <镜像1> [<镜像2> ...]`:删除本地镜像╰(\*°▽°\*)╯
+`#docker ps -a`:查看所有容器记录（包括未运行的容器）
+<br>
+- **不用拉取hello-world测试，直接拉取最新的openjdk**
 如果出现Error response from daemon，说明centos DNS域名解析错误，修改系统DNS解析地址为Google的域名服务器
-Docker仓库？docker镜像仓库？
+`# docker pull openjdk`
 
-### 2019.11.26 - 11.Docker Container
+- **Docker仓库？docker镜像仓库？**
+仓库（Repository）是集中存放镜像的地方，分为公共仓库和私有仓库。
+
+
+### 2019.11.26 - 12.Docker Container
 #### Docker run
 Docker命令：基于指定镜像创建容器；列出全部已创建的容器；停止运行容器；删除容器。容器ID使用hash值的前2位即可
 run基本参数：-p；-v；-d；-i；-t；--rm
+<kbd>-p</KBD>：指定要映射的IP和端口，但是在一个指定端口上只可以绑定一个容器
+>支持的格式有 `hostPort:containerPort`、`ip:hostPort:containerPort`、 `ip::containerPort`。
+>>- **hostPort:containerPort（映射所有接口地址）**
+将本地的 5000 端口映射到容器的 5000 端口，可以执行如下命令：
+`$ sudo docker run -d -p 5000:5000 training/webapp python app.py`
+此时默认会绑定本地所有接口上的所有地址。
+>>- **ip:hostPort:containerPort （映射指定地址的指定端口）**
+指定映射使用一个特定地址，比如 localhost 地址 127.0.0.1
+`$ sudo docker run -d -p 127.0.0.1:5000:5000 training/webapp python app.py`
+>>- **ip::containerPort （映射指定地址的任意端口）**
+绑定 localhost 的任意端口到容器的 5000 端口，本地主机会自动分配一个端口。
+`sudo docker run -d -p 127.0.0.1::5000 training/webapp python app.py`
+还可以使用 udp 标记来指定 udp 端口
+`$ sudo docker run -d -p 127.0.0.1:5000:5000/udp training/webapp python app.py`
+
+<kbd>-P</KBD>：Docker 会随机映射一个 49000~49900 的端口到内部容器开放的网络端口
+<kbd>-v</KBD>：挂载宿主机的一个目录
+<kbd>-d</KBD>：让 Docker 在后台运行而不是直接把执行命令的结果输出在当前宿主机下
+>使用 -d 参数启动后会返回一个唯一的 id，也可以通过 `docker container ls` 命令来查看容器信息。
+>要获取容器的输出信息，可以通过`docker container logs ` 命令
+
+<kbd>-i</kbd>:交互式操作，让容器的标准输入保持打开
+<kbd>-t</KBD>：让Docker分配一个伪终端并绑定到容器的标准输入上
+<kbd>--rm</KBD>：	退出时自动删除容器
+
 创建容器时，追加在容器启动后，容器内执行操作指令
 在/home/用户名/test下，创建HelloWorld.java
+`# vi HelloWorld.java`
+
 基于openjdk创建一个容器：挂载home/用户名/test/目录到容器内的/home/code/目录，
 即可以在容器中访问挂载目录中的文件；测试用，创建运行完就删除容器；
 在前台运行，即显示容器中的输出，后台运行看不到输出；添加容器内java直接运行挂载目录下的HelloWorld的命令
 
+`# docker run -it -v /home/Rice/test:/home/code --rm openjdk  sh -c "cd /home/code &&java HelloWorld.java"`
 当容器中没有运行的进程时，容器将关闭。tomcat/MySQL/Nginx等带服务进程的容器会一直运行，
 而普通openjdk的容器运行即关闭，除非运行像带web容器的springboot
 如何创建一个不关闭的openjdk容器？
 创建一个openjdk容器：依然挂载以上目录；启动标准输入，
 启动终端控制台；在后台运行；在容器内运行/bin/bash。即，创建一个一直运行的进程，使容器不会关闭；
+`# docker run -it -v /home/Rice/test:/home/code --rm openjdk /bin/bash`
 查看容器是否为运行状态
-
+`#docker ps -a`
 #### Docker exec
 exec基本参数：-i；-t。结合/bin/bash使用
 以可互交的带终端的模式，进入之上创建的后台运行的，未停止的openjdk容器
 在容器内进入挂载目录，运行HelloWorld，查看输出
 查看容器内系统版本？查看镜像/容器信息？查看镜像/容器占用？
+`cat /etc/issue`
+`docker inspect  [id/name] ` 容器id/镜像id查看容器镜像的详细信息。
+`docker images [id/name]`：查看镜像信息
+`ps -ef | grep 8dac6ac683f5`:查看镜像/容器占用
 
-### 2019.11.26 - 12.FirewallD & Services
+### 2019.11.26 - 13.FirewallD & Services
 CentOS集成的firewall工具。ports？firewall zone？使用默认的zone-public无需声明
 列出firewall所有打开服务与端口等信息，这一个命令就够所有查询了
 防火墙重载；永久开启http服务；永久打开80端口；永久关闭服务；永久关闭端口
@@ -292,7 +431,7 @@ firewall规则为动态添加，改变规则后需重载，无需重启
 
 查看一个服务的状态。一个服务的启动/停止/启动/禁用。基于firewalld操作
 
-### 2019.11.26 - 12.Docker Web Container
+### 2019.11.26 - 14.Docker Web Container
 在宿主机，通过scp命令将本地文件上传到服务器。注意，虚拟机网络为NAT模式，需显式声明ssh映射的端口，但参数与ssh命令不同
 创建目录，/home/用户名/services/。services下按应用创建目录
 将/github/resources/docker-examples.war文件下载到本地，再上传到/home/用户名/services/docker-tomcat/。目录需先创建
@@ -308,7 +447,7 @@ https://github.com/firewalld/firewalld/issues/461
 停止，并删除此容器。命令写在一行执行
 注意，服务器的一个端口只能被一个应用/容器监听，反复创建容器会端口冲突
 
-### 2019.11.26 - 12.Dockerfile
+### 2019.11.26 - 15.Dockerfile
 Orchestration System？为什么需要Docker Compose？优点？k8s(Kubernetes)？k8s与官方docker compose的适用场景？编写docker-compose文件的最大最大特点？
 https://docs.docker.com/compose/
 按官网教程安装最新版，添加执行权限
