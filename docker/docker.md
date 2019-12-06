@@ -205,9 +205,27 @@ bin/; dev/; mnt/; etc/; opt/; usr/; lib/; home/; /usr/bin/; /usr/lib/; /usr/libe
 >/var： 这是一个非常重要的目录，系统上跑了很多程序，那么每个程序都会有相应的日志产生，而这些日志就被记录到这个目录下，具体在/var/log 目录下，另外mail的预设放置也是在这里。
 
 ### 2019.11.30 - 8.Mount
-插入一个fat32/ntfs格式U盘，exfat默认不支持
-设置虚拟机识别读取。基本命令：列出所有指定格式磁盘；挂载设备，浏览设备内文件；取消挂载
+**插入一个fat32/ntfs格式U盘，exfat默认不支持
+设置虚拟机识别读取。基本命令：列出所有指定格式磁盘；挂载设备，浏览设备内文件；取消挂载**
+>CentOS默认源里没有NTFS-3G，想要添加ntfs支持，无非是自己下载编译安装或者加源yum安装。重新安装了一个CentOS7，用的是添加aliyun的epel源来yum安装的方式，简单易行。
+```
+1、加源
+wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
+2、安装
+# yum update;yum install ntfs-3g
+如果系统提示：没有可用软件包，可以输入
+# yum install ntfs*
+```
+`fdisk -l`
 
+`mount.ntfs-3g  /dev/sdb4 /mnt/ `
+
+```
+# umount -v /dev/sda1          通过设备名卸载  
+/dev/sda1 umounted  
+# umount -v /mnt/mymount/      通过挂载点卸载  
+/tmp/diskboot.img umounted
+```
 
 ### 2019.11.26 - 9.bash & chmod
 **Shell？bash？cat？了解脚本的：基本结构，支持的语句，执行linux命令，运行即可**
