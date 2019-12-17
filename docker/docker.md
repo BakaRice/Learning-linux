@@ -1,4 +1,4 @@
-# Linux-Docker Examples
+ # Linux-Docker Examples
 ### 2019.11.16 - 1.Virtual Machine
 下载最新版VirtualBox
 创建一个1GB内存+动态15GB磁盘，名为CentOS的虚拟机。注意，放在合适的位置
@@ -216,7 +216,7 @@ wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
 如果系统提示：没有可用软件包，可以输入
 # yum install ntfs*
 ```
-`fdisk -l`
+`fdisk -l`or`lsblk`(后者可以树状结构显示)
 
 `mount.ntfs-3g  /dev/sdb4 /mnt/ `
 
@@ -233,7 +233,7 @@ wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
 >Shell 是一个用 C 语言编写的程序，它是用户使用 Linux 的桥梁。Shell 既是一种命令语言，又是一种程序设计语言。
 >Shell 是指一种应用程序，这个应用程序提供了一个界面，用户通过这个界面访问操作系统内核的服务。
 >>bash是Unix shell的一种，Bash是许多Linux发行版的默认Shell
->>cat 命令用于连接文件并打印到标准输出设备上。（cat是使用方法不仅局限于查看内容，他也可以做到修改内容但是个人平常并不推荐这么用
+>>cat 命令用于连接文件并打印到标准输出设备上。（cat是使用方法不仅局限于查看内容，他也可以做到修改内容但是个人平常并不推荐这么用）
 
 ####2.基本结构
 ```
@@ -267,18 +267,37 @@ for 变量名 in 列表;do
 ```
 #!/bin/bash
 for file in `ls`;do
-        echo $file
-done
+        echo $file;
+done;
 ```
+```
+#!/bin/bash
+ls /home/C_program
+```
+
 使用 <kbd>Ctrl</kbd>+<kbd>Z</kbd>+<kbd>Z</kbd>可以直接保存退出
 
 
 **带权限的列出文件**
-`ls -al ` ` ls -l`
+`ls -al ` ` ls -l`=`ll`
 **chmod命令，r/w/x？3组权限？u/g/o？增加/修改/删除指定角色的指定权限。使用语义参数比数字好记
 为以上脚本文件，添加创建者具有读写执行权限命令？取消其他用户的读权限？
 权限角色，u，所有者；g，组；o，其他人**
+- u 表示该文件的拥有者，g 表示与该文件的拥有者属于同一个群体(group)者，o 表示其他以外的人，a 表示这三者皆是。  
+- \+ 表示增加权限、- 表示取消权限、= 表示唯一设定权限。  
+- r 表示可读取，w 表示可写入，x 表示可执行，X 表示只有当该文件是个子目录或者该文件已经被设定过为可执行。  
 
+r=4,w=2,x=1
+- -c : 若该文件权限确实已经更改，才显示其更改动作
+- -f : 若该文件权限无法被更改也不要显示错误讯息
+- -v : 显示权限变更的详细资料
+- -R : 对目前目录下的所有文件与子目录进行相同的权限变更(即以递回的方式逐个变更)
+```
+chmod ugo+r file1.txt 所有人皆可读取
+chmod a+r file1.txt 所有人皆可读取
+chmod ug+w,o-w file1.txt file2.txt 将文件 file1.txt 与 file2.txt 设为该文件拥有者，与其所属同一个群体者可写入，但其他以外的人则不可写入
+chmod -R a+r * 将目前目录下的所有文件与子目录皆设为任何人可读取
+```
 ### 2019.11.26 - 10.Docker
 可以把安装的gcc/openjdk等等都卸载了
 https://docs.docker.com/engine/docker-overview/
@@ -286,6 +305,25 @@ https://geekflare.com/docker-vs-virtual-machine/
 https://yeasy.gitbooks.io/docker_practice/
 #### 1.虚拟化技术&docker虚拟化优势
 **了解早先服务器基于虚拟化技术的部署，为什么使用虚拟化技术？当前Docker的虚拟化与之前的区别？优点？了解docker images docker containers？**
+
+最大利用化:
+虚拟化技术可以扩大硬件的容量，简化软件的重新配置过程。CPU的虚拟化技术可以单CPU模拟多CPU并行，允许一个平台同时运行多个操作系统，并且应用程序都可以在相互独立的空间内运行而互不影响，从而显著提高计算机的工作效率。
+docker 和 之前的区别：
+
+|Virtual Machine|Docker Container|
+|--|--|
+|Hardware-level process isolation|OS level process isolation|
+|Each VM has a separate OS|Each container can share OS|
+|Boots in minutes|Boots in seconds|
+|VMs are of few GBs|Containers are lightweight (KBs/MBs)|
+|Ready-made VMs are difficult to find|Pre-built docker containers are easily available|
+|VMs can move to new host easily|Containers are destroyed and re-created rather than moving|
+|Creating VM takes a relatively longer time|Containers can be created in seconds|
+|More resource usage|Less resource usage|
+
+<img src="https://docs.docker.com/images/Container%402x.png" width = "300" alt="图片名称" >
+<img src="https://docs.docker.com/images/VM%402x.png" width = "300" alt="图片名称" >
+
 Docker engine提供了启动Images和containers核心的技术的支持。当你运行docker run hello-world 命令时，实际上可分为三个部分：
 ![运行docker run hello-world的时间过程](https://images2015.cnblogs.com/blog/918915/201701/918915-20170126134304191-517283657.png)
 
@@ -307,16 +345,6 @@ Docker engine提供了启动Images和containers核心的技术的支持。当你
 - 云服务器：在服务器集群中采用硬件虚拟化技术。
    随时虚拟化的过程
 
-|Virtual Machine|Docker Container|
-|--|--|
-|Hardware-level process isolation|OS level process isolation|
-|Each VM has a separate OS|Each container can share OS|
-|Boots in minutes|Boots in seconds|
-|VMs are of few GBs|Containers are lightweight (KBs/MBs)|
-|Ready-made VMs are difficult to find|Pre-built docker containers are easily available|
-|VMs can move to new host easily|Containers are destroyed and re-created rather than moving|
-|Creating VM takes a relatively longer time|Containers can be created in seconds|
-|More resource usage|Less resource usage|
 
 
 https://docs.docker.com/
@@ -373,7 +401,7 @@ For more examples and ideas, visit:
 - **Docker基本命令：拉取镜像；列出本地镜像；删除镜像；**
 不建议在本地查询，去官方网站查询更方便
 `# docker pull [选项] [Docker Registry 地址[:端口号]/]仓库名[:标签]` 拉取镜像
-`# docker image ls`:列出本地镜像
+`# docker images `:列出本地镜像
 `# docker image rm [选项] <镜像1> [<镜像2> ...]`:删除本地镜像╰(\*°▽°\*)╯
 `#docker ps -a`:查看所有容器记录（包括未运行的容器）
 <br>
@@ -422,7 +450,9 @@ run基本参数：-p；-v；-d；-i；-t；--rm
 即可以在容器中访问挂载目录中的文件；测试用，创建运行完就删除容器；
 在前台运行，即显示容器中的输出，后台运行看不到输出；添加容器内java直接运行挂载目录下的HelloWorld的命令
 
-`# docker run -it -v /home/Rice/test:/home/code --rm openjdk  sh -c "cd /home/code &&java HelloWorld.java"`
+`# docker run -it -v /home/Rice/test/:/home/code/ --rm openjdk  sh -c "cd /home/code &&java HelloWorld.java"`
+
+`#docker run -v  /home/Rice/test/:/home/code/ --rm openjdk java home/code/HelloWorld.java`
 当容器中没有运行的进程时，容器将关闭。tomcat/MySQL/Nginx等带服务进程的容器会一直运行，
 而普通openjdk的容器运行即关闭，除非运行像带web容器的springboot
 如何创建一个不关闭的openjdk容器？
@@ -436,26 +466,111 @@ exec基本参数：-i；-t。结合/bin/bash使用
 以可互交的带终端的模式，进入之上创建的后台运行的，未停止的openjdk容器
 在容器内进入挂载目录，运行HelloWorld，查看输出
 查看容器内系统版本？查看镜像/容器信息？查看镜像/容器占用？
+先启动
+` docker run -it -d -v /home/Rice/test:/home/code openjdk sh -c "/bin/bash"`
+进入容器（exec 不会停止 attach 会停止）
+`docker exec -it b4e /bin/bash`
+
 `cat /etc/issue`
 `docker inspect  [id/name] ` 容器id/镜像id查看容器镜像的详细信息。
 `docker images [id/name]`：查看镜像信息
 `ps -ef | grep 8dac6ac683f5`:查看镜像/容器占用  
 
 ### 2019.11.26 - 13.FirewallD & Services
-CentOS集成的firewall工具。ports？firewall zone？使用默认的zone-public无需声明
-列出firewall所有打开服务与端口等信息，这一个命令就够所有查询了
-防火墙重载；永久开启http服务；永久打开80端口；永久关闭服务；永久关闭端口
-firewall规则为动态添加，改变规则后需重载，无需重启
+**CentOS集成的firewall工具。**
+FirewallD 提供了支持网络/防火墙区域(zone)定义网络链接以及接口安全等级的动态防火墙管理工具。
+**ports？firewall zone？使用默认的zone-public无需声明**
+端口可以映射到另一个端口以及/或者其他主机。
+firewall zone：
+从不信任到信任的顺序排序
+- `drop`：丢弃，丢弃所有进入的包，而不给出任何响应
+- `block`：阻塞，拒绝所有外部发起的连接，允许内部发起的连接
+- `public`：公开，允许指定的进入连接
+- `external`：外部，同上，对伪装的进入连接，一般用于路由转发
+- `dmz`：隔离区，允许受限制的进入连接
+- `work`:工作，允许受信任的计算机被限制的进入连接，类似 workgroup
+- `home`：家庭，上，类似 homegroup
+- `internal`：内部，同上，范围针对所有互联网用户
+- `trusted`：受信任的，信任所有连接
 
-查看一个服务的状态。一个服务的启动/停止/启动/禁用。基于firewalld操作
+列出firewall所有打开服务与端口等信息，这一个命令就够所有查询了
+```
+# 查看所有信息
+# firewall-cmd --list-all
+```
+```
+# 查询所有开放的端口。本次运行
+# firewall-cmd --list-ports
+```
+**防火墙重载；永久开启http服务；永久打开80端口；永久关闭服务；永久关闭端口。firewall规则为动态添加，改变规则后需重载，无需重启**
+- 防火墙重载：
+`firewall-cmd --reload   `
+
+- firewall http 永久服务开启：
+```
+firewall-cmd --query-service http               ##查看http服务是否支持，返回yes或者no
+firewall-cmd --add-service=http                 ##临时开放http服务
+firewall-cmd --add-service=http --permanent     ##永久开放http服务
+firewall-cmd --reload                           ##重启防火墙生效
+```
+- 开放某个端口
+```
+# 开放某个端口，立即生效。本次运行
+# firewall-cmd --add-port=80/tcp
+```
+- 永久开放某个端口
+```
+# 开放某个端口，重新加载配置后生效。持久
+# firewall-cmd --add-port=80/tcp --permanent
+```
+`-zone #作用域`
+`-add-port=80/tcp #添加端口，格式为：端口/通讯协议`
+`–permanent #永久生效，没有此参数重启后失效`
+`systemctl restart firewalld.service`
+
+
+- 永久关闭某个端口、服务
+将上述开启过程中的`--add`改为 `--remove`
+
+
+
+**查看一个服务的状态。一个服务的启动/停止/启动/禁用。基于firewalld操作**
+查看状态：
+`firewall-cmd --service=<service> --state`
+启用服务：
+`firewall-cmd [--zone=<zone>] --add-service=<service> [--timeout=<seconds>]`
+#停止：
+禁止：
+`firewall-cmd [--zone=<zone>] --remove-service=<service>`  
 
 ### 2019.11.26 - 14.Docker Web Container
-在宿主机，通过scp命令将本地文件上传到服务器。注意，虚拟机网络为NAT模式，需显式声明ssh映射的端口，但参数与ssh命令不同
-创建目录，/home/用户名/services/。services下按应用创建目录
-将/github/resources/docker-examples.war文件下载到本地，再上传到/home/用户名/services/docker-tomcat/。目录需先创建
+**在宿主机，通过scp命令将本地文件上传到服务器。注意，虚拟机网络为NAT模式，需显式声明ssh映射的端口，但参数与ssh命令不同**
+`scp local_file remote_username@remote_ip:remote_folder  `
+<KBD>-r</KBD>：拷贝文件夹
+`F:\>scp ./miniprogram.txt root@192.168.56.1:/home/Rice`
+**创建目录，/home/用户名/services/。services下按应用创建目录
+将/github/resources/docker-examples.war文件下载到本地，再上传到/home/用户名/services/docker-tomcat/。目录需先创建**
 
-拉取最新tomcat镜像。默认暴露的端口？部署路径？集成的openjdk版本？查看镜像信息？
-基于命令行创建一个容器：映射服务器80端口到容器的8080端口；挂载docker-examples.war所在目录到容器中的部署目录；后台运行
+**拉取最新tomcat镜像。**
+`$ docker pull tomcat`
+默认暴露的端口？部署路径？集成的openjdk版本？查看镜像信息？
+```
+"ExposedPorts": {
+                "8080/tcp": {}
+            },
+```
+`"WorkingDir": "/usr/local/tomcat",`
+`集成了openjdk1.8`
+`# docker inspect tomcat`
+**基于命令行创建一个容器：映射服务器80端口到容器的8080端口；挂载docker-examples.war所在目录到容器中的部署目录；后台运行**
+创建容器 映射服务器80端口到容器8080端口
+cp method:
+`# docker run -d -p 80:8080 tomcat`
+`# docker cp /home/Rice/services/docker-tomcat/docker-examples.war bc9:/usr/local/tomcat/webapps`
+mount method:
+`# docker run -it -d -v /home/Rice/services/docker-tomcat/:/usr/local/tomcat/webapps -p 80:8080 tomcat`
+<Kbd>注意是！挂载目录！<kbd>
+
 查看容器是否创建/启动成功。容器中的tomcat自动在挂载目录解压war包部署
 在虚拟机添加端口，例如8888，映射虚拟机的80端口
 在宿主浏览器，本地+端口+部署在tomcat应用的名称，访问应用
@@ -466,11 +581,25 @@ https://github.com/firewalld/firewalld/issues/461
 注意，服务器的一个端口只能被一个应用/容器监听，反复创建容器会端口冲突
 
 ### 2019.11.26 - 15.Dockerfile
-Orchestration System？为什么需要Docker Compose？优点？k8s(Kubernetes)？k8s与官方docker compose的适用场景？编写docker-compose文件的最大最大特点？
-https://docs.docker.com/compose/
-按官网教程安装最新版，添加执行权限
+https://docs.docker.com/develop/develop-images/dockerfile_best-practices/  
+https://yeasy.gitbooks.io/docker_practice/image/dockerfile/  
+理解docker image layers的设计。优点？  
+按官方文档，掌握最基本的FROM RUN CMD COPY ADD指令。每执行一条指令意味着什么？COPY与ADD的区别？  
+在/home/用户名/services/dockers-tomcat/下，编写一个Dockerfile，
+基于tomcat镜像，将docker-examples.war文件复制到部署路径下。注意，copy指令，只能指定相对于dockerfile的相对路径，不能使用基于根的绝对路径  
+是否需要声明暴露端口？理解layer  
+
+基于文件构建镜像，声明repository仓库名称，注意结尾标识符。repository的官方命名标准？  
+查看镜像是否构建。查看镜像信息？  
+基于自定义构建的镜像创建容器。与之前的创建命令相比，需要什么参数？  
+先学习基本镜像构建。其他指令，构建过程优化，后期讨论。不讨论基于容器的镜像构建  
+
+### 2019.11.26 - 16.Docker compose
+Orchestration System？为什么需要Docker Compose？优点？k8s(Kubernetes)？k8s与官方docker compose的适用场景？编写docker-compose文件的最大最大特点？  
+https://docs.docker.com/compose/  
+按官网教程安装最新版，添加执行权限  
 基于vi在/home/用户名/services/docker-tomcat/下，编写一个docker-compose文件，基于第3版，服务名称自定义。
-将14Docker Web Container，基于命令行创建容器的命令，转为在文件中描述，包括tomcat基础镜像，挂载目录，映射端口
-基于文件创建在后台运行的容器；停止/停止删除基于文件创建的容器
-查看容器日志，错误时可查看
+将14Docker Web Container，基于命令行创建容器的命令，转为在文件中描述，包括tomcat基础镜像，挂载目录，映射端口  
+基于文件创建在后台运行的容器；停止/停止删除基于文件创建的容器  
+查看容器日志，错误时可查看  
 注意，严格的缩进与空格
