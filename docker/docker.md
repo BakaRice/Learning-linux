@@ -567,9 +567,9 @@ firewall-cmd --reload                           ##重启防火墙生效
 cp method:
 `# docker run -d -p 80:8080 tomcat`
 `# docker cp /home/Rice/services/docker-tomcat/docker-examples.war bc9:/usr/local/tomcat/webapps`
-mount method:
+**mount method:
 `# docker run -it -d -v /home/Rice/services/docker-tomcat/:/usr/local/tomcat/webapps -p 80:8080 tomcat`
-<Kbd>注意是！挂载目录！<kbd>
+<kbd> 注意是！挂载目录！<kbd> **
 
 查看容器是否创建/启动成功。容器中的tomcat自动在挂载目录解压war包部署
 在虚拟机添加端口，例如8888，映射虚拟机的80端口
@@ -583,23 +583,182 @@ https://github.com/firewalld/firewalld/issues/461
 ### 2019.11.26 - 15.Dockerfile
 https://docs.docker.com/develop/develop-images/dockerfile_best-practices/  
 https://yeasy.gitbooks.io/docker_practice/image/dockerfile/  
-理解docker image layers的设计。优点？  
-按官方文档，掌握最基本的FROM RUN CMD COPY ADD指令。每执行一条指令意味着什么？COPY与ADD的区别？  
-在/home/用户名/services/dockers-tomcat/下，编写一个Dockerfile，
-基于tomcat镜像，将docker-examples.war文件复制到部署路径下。注意，copy指令，只能指定相对于dockerfile的相对路径，不能使用基于根的绝对路径  
-是否需要声明暴露端口？理解layer  
+**理解docker image layers的设计。优点？**
 
-基于文件构建镜像，声明repository仓库名称，注意结尾标识符。repository的官方命名标准？  
-查看镜像是否构建。查看镜像信息？  
-基于自定义构建的镜像创建容器。与之前的创建命令相比，需要什么参数？  
+- 共享使镜像更小
+
+- 复制使得容器更高效 
+
+   
+
+  #### 1. layer的理解
+  
+  镜像(image)和容器(container)都是基于层(layer)的
+  
+  `Docker`的镜像是由一系列只读层组成的一个栈，上面的层依赖其下面的层，这些层从外面看起来是一个整体。栈底的镜像被称作基础镜像(base image)，所有上面的层都基于这个基础镜像。
+  
+  当你在一个容器中进行了某些操作比如添加了一个文件，然后调用`docker commit`操作创建新的镜像时，`Docker`会在镜像栈的最上面创建一个新的层，这个层包含了新添加的文件。
+  或者，通过`Dockerfile`创建新的镜像时，通过FROM指令指定的就是基础镜像。此后的每条指令都会创建一个新的层，层中包含了这条指令对镜像的修改。
+  
+  容器`container`不仅包含镜像的所有层，它还在最上面添加了一个可读层称作容器层`container layer`。下面是一个基于`ubuntu:15.04`运行起来的容器的层之间的关系：
+  
+  ![img](https://img-blog.csdn.net/20170419135324953)
+  
+  容器与镜像的主要区别就在于这个可写层(writable layer),对容器的所有写操作无论是添加新内容还是修改原来的内容都会保存在这个可读层中。如果容器被删除，writable layer也会被删除，但镜像层不变。
+  正是因为每个镜像都有自己的可写层，所以容器之间可以共享同一个镜像的各层。下面是多个容器使用同一个镜像的例子：
+  
+  ![img](https://img-blog.csdn.net/20170419135439094)
+
+**按官方文档，掌握最基本的FROM RUN CMD COPY ADD指令。每执行一条指令意味着什么？COPY与ADD的区别？**  
+
+```
+FROM ubuntu:18.04
+COPY . /app
+RUN make /app
+CMD python /app/app.py
+```
+
+- `FROM`从`ubuntu:18.04`Docker映像创建一个图层。
+
+- `COPY` 从Docker客户端的当前目录添加文件。
+
+- `RUN`使用构建您的应用程序make。
+
+- `CMD` 指定在容器中运行什么命令。
+
+- `ADD` 更偏向于文件的解压
+
+
+
+**在/home/用户名/services/dockers-tomcat/下，编写一个Dockerfile，
+基于tomcat镜像，将docker-examples.war文件复制到部署路径下。注意，copy指令，只能指定相对于dockerfile的相对路径，不能使用基于根的绝对路径  
+是否需要声明暴露端口？理解layer**  
+Dockerfile
+```shell
+FROM tomcat
+COPY  ./docker-examples.war /usr/local/tomcat/webapps/
+```
+
+`docker bulid .`
+点很重要
+
+- 不需要声明暴露端口
+要将`EXPOSE`和在运行时使用`-p <宿主端口>:<容器端口>`区分开来。`-p`，是映射宿主端口和容器端口，换句话说，就是将容器的对应端口服务公开给外界访问，而`EXPOSE`仅仅是声明容器打算使用什么端口而已，并不会自动在宿主进行端口映射。
+
+- *layer的概念：*
+Docker 镜像是由多个文件系统（只读层）叠加而成，每个层仅包含了前一层的差异部分。当我们启动一个容器的时候，Docker 会加载镜像层并在其上添加一个可写层。容器上所做的任何更改，譬如新建文件、更改文件、删除文件，都将记录与可写层上。容器层与镜像层的结构如下图所示。
+
+**基于文件构建镜像，声明repository仓库名称，注意结尾标识符。repository的官方命名标准？  
+查看镜像是否构建。查看镜像信息?**
+
+这里的`Repository`是指镜像全名在冒号:之前的部分，
+冒号:之后的部分是镜像的标签（tag），用来区分镜像的版本。 如名为`my-app:3.1.4`的镜像，`my-app`就是镜像的 Repository 部分。
+Repository又可以用斜杠`/`分隔开，`/`之前的部分是可选的DNS格式的主机名。主机名必须符合DNS规则，但 **不得** 包含下划线`_`字符，主机名可以有如`：8080`格式的端口号。
+镜像名可以包含小写字符，数字和分隔符。 分隔符是句点.，一个或两个下划线_，或一个或多个短横线-，镜像名**不允许**以分隔符开头或结尾。
+
+**基于自定义构建的镜像创建容器。与之前的创建命令相比，需要什么参数？**  
+需要指定dockerfile的位置
+./URL/-f
+
 先学习基本镜像构建。其他指令，构建过程优化，后期讨论。不讨论基于容器的镜像构建  
 
 ### 2019.11.26 - 16.Docker compose
-Orchestration System？为什么需要Docker Compose？优点？k8s(Kubernetes)？k8s与官方docker compose的适用场景？编写docker-compose文件的最大最大特点？  
+#### 1. Orchestration System？
+
+ 编排是指一次性自动执行多项任务编排系统，简化并优化重复性的频发流程，以确保准确、快速的软件部署
+
+#### 2. 为什么需要Docker Compose？优点？
+
+​	`Docker Compose` 是 Docker 官方编排（Orchestration）项目之一，负责快速的部署分布式应用。`Compose` 项目是 Docker 官方的开源项目，负责实现对 Docker 容器集群的快速编排。
+
+​	 `Compose` 恰好满足了这样的需求。它允许用户通过一个单独的 `docker-compose.yml` 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目（project）。
+
+#### 3. k8s(Kubernetes)？k8s与官方docker compose的适用场景？
+
+K8S，就是基于容器的集群管理平台。
+
+Docker Compose是单机管理Docker的，Kubernetes是多节点管理Docker的
+
+#### 4. 编写docker-compose文件的最大最大特点？
+
+批量操作！
+
 https://docs.docker.com/compose/  
-按官网教程安装最新版，添加执行权限  
-基于vi在/home/用户名/services/docker-tomcat/下，编写一个docker-compose文件，基于第3版，服务名称自定义。
-将14Docker Web Container，基于命令行创建容器的命令，转为在文件中描述，包括tomcat基础镜像，挂载目录，映射端口  
-基于文件创建在后台运行的容器；停止/停止删除基于文件创建的容器  
+
+#### 5. 按官网教程安装最新版，添加执行权限  
+
+> 对于`alpine`，需要以下依赖包： `py-pip`，`python-dev`，`libffi-dev`，`openssl-dev`，`gcc`，`libc-dev`，和`make`。
+
+1. 运行以下命令以下载Docker Compose的当前稳定版本：
+
+   ```shell
+   sudo curl -L "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   ```
+
+2. 将可执行权限应用于二进制文件：
+
+   ```shell
+   sudo chmod +x /usr/local/bin/docker-compose
+   ```
+
+3. 测试安装
+
+   ```shell
+   docker-compose --version
+   docker-compose version 1.25.0, build 0a186604
+   ```
+
+
+
+基于vi在/home/用户名/services/docker-tomcat/下，编写一个docker-compose文件，基于第3版，服务名称自定义。将14Docker Web Container，基于命令行创建容器的命令，转为在文件中描述，包括tomcat基础镜像，挂载目录，映射端口  
+基于文件创建在后台运行的容器；
+
+> `version`：版本注释，不可缺少的字段。
+>  `services`：该层级下指明使用镜像开启容器的具体配置，是最主要的配置项。
+>  `flask-web、redis`：自定义的该service名字。
+>  `build`：Dockerfile的路径，使用它来创建一个定制的镜像，或者可使用image指定已有镜像。
+>  `image`：指定使用已有镜像。
+>  `ports`：开启容器后暴露的端口映射。
+>  `container_name`:指定开启容器后的容器名。
+
+```docker
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "80:8080"
+```
+
+````shell
+docker-compose up -d
+````
+
+停止/停止删除基于文件创建的容器  
+
+```shell
+docker-compose stop
+docker-compose down
+```
+
+查看编排内容：
+
+```shell
+docker-compose ps
+```
+
 查看容器日志，错误时可查看  
+
+```shell
+docker-compose logs
+docker inspect iamage-name
+```
+
+### 最终部署使用
+
+1. 使用`docker-compose config`检查语法是否错误
+2. 使用`docker-compose up -d`后台启动服务，过程中会自动根据Dockerfile创建镜像，并且按要求启动服务
+3. 使用`docker-compose logs`检查运行状态
+4. 检查项目是否正常运行：`curl 127.0.0.1:5000`，每次访问能收到变化的数据证明项目部署已经成功完成。
+
 注意，严格的缩进与空格
