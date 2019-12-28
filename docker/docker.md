@@ -507,21 +507,21 @@ firewall zone：
 `firewall-cmd --reload   `
 
 - firewall http 永久服务开启：
-```
+```shell
 firewall-cmd --query-service http               ##查看http服务是否支持，返回yes或者no
 firewall-cmd --add-service=http                 ##临时开放http服务
 firewall-cmd --add-service=http --permanent     ##永久开放http服务
-firewall-cmd --reload                           ##重启防火墙生效
+firewall-cmd --reload                           ##重载防火墙生效
 ```
 - 开放某个端口
-```
+```shell
 # 开放某个端口，立即生效。本次运行
-# firewall-cmd --add-port=80/tcp
+firewall-cmd --add-port=80/tcp
 ```
 - 永久开放某个端口
-```
+```shell
 # 开放某个端口，重新加载配置后生效。持久
-# firewall-cmd --add-port=80/tcp --permanent
+firewall-cmd --add-port=80/tcp --permanent
 ```
 `-zone #作用域`
 `-add-port=80/tcp #添加端口，格式为：端口/通讯协议`
@@ -536,40 +536,63 @@ firewall-cmd --reload                           ##重启防火墙生效
 
 **查看一个服务的状态。一个服务的启动/停止/启动/禁用。基于firewalld操作**
 查看状态：
-`firewall-cmd --service=<service> --state`
+```shell
+firewall-cmd --service=<service> --state
+```
 启用服务：
-`firewall-cmd [--zone=<zone>] --add-service=<service> [--timeout=<seconds>]`
+
+```shell
+firewall-cmd [--zone=<zone>] --add-service=<service> [--timeout=<seconds>]
+```
+
 #停止：
 禁止：
-`firewall-cmd [--zone=<zone>] --remove-service=<service>`  
+```shell
+firewall-cmd [--zone=<zone>] --remove-service=<service>
+```
 
 ### 2019.11.26 - 14.Docker Web Container
 **在宿主机，通过scp命令将本地文件上传到服务器。注意，虚拟机网络为NAT模式，需显式声明ssh映射的端口，但参数与ssh命令不同**
-`scp local_file remote_username@remote_ip:remote_folder  `
+```shell
+scp local_file remote_username@remote_ip:remote_folder  
+```
 <KBD>-r</KBD>：拷贝文件夹
-`F:\>scp ./miniprogram.txt root@192.168.56.1:/home/Rice`
+
+```shell
+F:\>scp ./miniprogram.txt root@192.168.56.1:/home/Rice
+```
 **创建目录，/home/用户名/services/。services下按应用创建目录
 将/github/resources/docker-examples.war文件下载到本地，再上传到/home/用户名/services/docker-tomcat/。目录需先创建**
 
 **拉取最新tomcat镜像。**
-`$ docker pull tomcat`
+```shell
+docker pull tomcat
+```
 默认暴露的端口？部署路径？集成的openjdk版本？查看镜像信息？
 ```
 "ExposedPorts": {
                 "8080/tcp": {}
             },
 ```
-`"WorkingDir": "/usr/local/tomcat",`
+```"WorkingDir": "/usr/local/tomcat",```
 `集成了openjdk1.8`
-`# docker inspect tomcat`
+
+```shell
+docker inspect tomcat
+```
 **基于命令行创建一个容器：映射服务器80端口到容器的8080端口；挂载docker-examples.war所在目录到容器中的部署目录；后台运行**
 创建容器 映射服务器80端口到容器8080端口
 cp method:
-`# docker run -d -p 80:8080 tomcat`
-`# docker cp /home/Rice/services/docker-tomcat/docker-examples.war bc9:/usr/local/tomcat/webapps`
-**mount method:
-`# docker run -it -d -v /home/Rice/services/docker-tomcat/:/usr/local/tomcat/webapps -p 80:8080 tomcat`
-<kbd> 注意是！挂载目录！<kbd> **
+```shell
+docker run -d -p 80:8080 tomcat
+docker cp /home/Rice/services/docker-tomcat/docker-examples.war bc9:/usr/local/tomcat/webapps
+```
+**mount method:**
+
+```shell
+docker run -it -d -v /home/Rice/services/docker-tomcat/:/usr/local/tomcat/webapps -p 80:8080 tomcat
+```
+<kbd>  注意是！挂载目录！<kbd> 
 
 查看容器是否创建/启动成功。容器中的tomcat自动在挂载目录解压war包部署
 在虚拟机添加端口，例如8888，映射虚拟机的80端口
@@ -577,7 +600,14 @@ cp method:
 
 https://github.com/firewalld/firewalld/issues/461
 创建容器时在服务器映射的端口，即使服务器firewall没有开启服务或端口，外部依然可以直接访问？
+
+> 在Linux上，Docker操纵`iptables`规则以提供网络隔离。这是一个实现细节，您不应修改Docker插入`iptables`策略中的规则。
+
 停止，并删除此容器。命令写在一行执行
+
+```shell
+ docker rm $(docker stop CONTAINER ID)
+```
 注意，服务器的一个端口只能被一个应用/容器监听，反复创建容器会端口冲突
 
 ### 2019.11.26 - 15.Dockerfile
@@ -587,26 +617,26 @@ https://yeasy.gitbooks.io/docker_practice/image/dockerfile/
 
 - 共享使镜像更小
 
-- 复制使得容器更高效 
+- 复制使得容器更高效
 
-   
+
 
   #### 1. layer的理解
-  
+
   镜像(image)和容器(container)都是基于层(layer)的
-  
+
   `Docker`的镜像是由一系列只读层组成的一个栈，上面的层依赖其下面的层，这些层从外面看起来是一个整体。栈底的镜像被称作基础镜像(base image)，所有上面的层都基于这个基础镜像。
-  
+
   当你在一个容器中进行了某些操作比如添加了一个文件，然后调用`docker commit`操作创建新的镜像时，`Docker`会在镜像栈的最上面创建一个新的层，这个层包含了新添加的文件。
   或者，通过`Dockerfile`创建新的镜像时，通过FROM指令指定的就是基础镜像。此后的每条指令都会创建一个新的层，层中包含了这条指令对镜像的修改。
-  
+
   容器`container`不仅包含镜像的所有层，它还在最上面添加了一个可读层称作容器层`container layer`。下面是一个基于`ubuntu:15.04`运行起来的容器的层之间的关系：
-  
+
   ![img](https://img-blog.csdn.net/20170419135324953)
-  
+
   容器与镜像的主要区别就在于这个可写层(writable layer),对容器的所有写操作无论是添加新内容还是修改原来的内容都会保存在这个可读层中。如果容器被删除，writable layer也会被删除，但镜像层不变。
   正是因为每个镜像都有自己的可写层，所以容器之间可以共享同一个镜像的各层。下面是多个容器使用同一个镜像的例子：
-  
+
   ![img](https://img-blog.csdn.net/20170419135439094)
 
 **按官方文档，掌握最基本的FROM RUN CMD COPY ADD指令。每执行一条指令意味着什么？COPY与ADD的区别？**  
@@ -656,9 +686,25 @@ Docker 镜像是由多个文件系统（只读层）叠加而成，每个层仅�
 Repository又可以用斜杠`/`分隔开，`/`之前的部分是可选的DNS格式的主机名。主机名必须符合DNS规则，但 **不得** 包含下划线`_`字符，主机名可以有如`：8080`格式的端口号。
 镜像名可以包含小写字符，数字和分隔符。 分隔符是句点.，一个或两个下划线_，或一个或多个短横线-，镜像名**不允许**以分隔符开头或结尾。
 
+```
+docker pull 注册服务器的仓库名/镜像名:Tag
+## 例如：
+# docker pull registry.hub.docker.com/ubuntu:latest
+# docker pull dl.dockerpool.com:5000/ubuntu
+```
+
+> 当不使用Tag的时候，默认会使用latest进行标记。
+
 **基于自定义构建的镜像创建容器。与之前的创建命令相比，需要什么参数？**  
 需要指定dockerfile的位置
 ./URL/-f
+
+```shell
+#Dockerfile一般位于构建上下文的根目录下，也可以通过-f指定该文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+#构建时，还可以通过-t参数指定构建成后，镜像的仓库、标签等：
+docker build -f  Dockerfile.test -t image-train-test .
+```
 
 先学习基本镜像构建。其他指令，构建过程优化，后期讨论。不讨论基于容器的镜像构建  
 
@@ -669,9 +715,9 @@ Repository又可以用斜杠`/`分隔开，`/`之前的部分是可选的DNS格�
 
 #### 2. 为什么需要Docker Compose？优点？
 
-​	`Docker Compose` 是 Docker 官方编排（Orchestration）项目之一，负责快速的部署分布式应用。`Compose` 项目是 Docker 官方的开源项目，负责实现对 Docker 容器集群的快速编排。
-
-​	 `Compose` 恰好满足了这样的需求。它允许用户通过一个单独的 `docker-compose.yml` 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目（project）。
+`Docker Compose` 是 Docker 官方编排（Orchestration）项目之一，负责快速的部署分布式应用。`Compose` 项目是 Docker 官方的开源项目，负责实现对 Docker 容器集群的快速编排。
+	
+`Compose` 恰好满足了这样的需求。它允许用户通过一个单独的 `docker-compose.yml` 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目（project）。
 
 #### 3. k8s(Kubernetes)？k8s与官方docker compose的适用场景？
 
@@ -694,20 +740,16 @@ https://docs.docker.com/compose/
    ```shell
    sudo curl -L "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
    ```
-
 2. 将可执行权限应用于二进制文件：
 
    ```shell
    sudo chmod +x /usr/local/bin/docker-compose
    ```
-
 3. 测试安装
-
-   ```shell
-   docker-compose --version
-   docker-compose version 1.25.0, build 0a186604
-   ```
-
+```shell
+docker-compose --version
+docker-compose version 1.25.0, build 0a186604
+```
 
 
 基于vi在/home/用户名/services/docker-tomcat/下，编写一个docker-compose文件，基于第3版，服务名称自定义。将14Docker Web Container，基于命令行创建容器的命令，转为在文件中描述，包括tomcat基础镜像，挂载目录，映射端口  
@@ -715,7 +757,7 @@ https://docs.docker.com/compose/
 
 > `version`：版本注释，不可缺少的字段。
 >  `services`：该层级下指明使用镜像开启容器的具体配置，是最主要的配置项。
->  `flask-web、redis`：自定义的该service名字。
+>  `flask-web、redis、web`：自定义的该service名字。
 >  `build`：Dockerfile的路径，使用它来创建一个定制的镜像，或者可使用image指定已有镜像。
 >  `image`：指定使用已有镜像。
 >  `ports`：开启容器后暴露的端口映射。
@@ -730,9 +772,9 @@ services:
       - "80:8080"
 ```
 
-````shell
+```shell
 docker-compose up -d
-````
+```
 
 停止/停止删除基于文件创建的容器  
 
